@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Сегмент-Полкан — оператор</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f7; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    button { padding: 10px 14px; margin: 4px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+    .stop { background: #d81919; color: white; font-weight: bold; }
+    input { width: 90px; padding: 8px; margin: 4px; }
+    img { max-width: 100%; border-radius: 12px; background: #ddd; }
+    pre { background: #111; color: #0f0; padding: 12px; border-radius: 8px; min-height: 120px; }
+  </style>
+</head>
+<body>
+  <h1>Сегмент-Полкан — панель оператора</h1>
+  <div class="grid">
+    <div class="card">
+      <h2>Управление</h2>
+      <button onclick="post('/api/enable')">Enable</button>
+      <button onclick="post('/api/home')">Home</button>
+      <button class="stop" onclick="post('/api/stop')">STOP</button>
+      <button onclick="post('/api/disable')">Disable</button>
+
+      <h3>XYZ</h3>
+      <input id="x" value="250" placeholder="X мм">
+      <input id="y" value="0" placeholder="Y мм">
+      <input id="z" value="180" placeholder="Z мм">
+      <button onclick="moveXYZ()">Move XYZ</button>
+
+      <h3>Язычок</h3>
+      <button onclick="post('/api/tongue_touch')">Коснуться/уловить</button>
+      <button onclick="post('/api/tongue_release')">Освободить</button>
+
+      <h3>Сценарий СИП</h3>
+      <button onclick="scenarioCollect()">Взять → СИП → спектр</button>
+    </div>
+
+    <div class="card">
+      <h2>Видео</h2>
+      <img src="/video" alt="camera stream">
+    </div>
+
+    <div class="card">
+      <h2>Телеметрия</h2>
+      <button onclick="refreshStatus()">Обновить</button>
+      <pre id="telemetry"></pre>
+    </div>
+  </div>
+
+<script>
+async function post(url) {
+  const res = await fetch(url, {method: 'POST'});
+  document.getElementById('telemetry').textContent = JSON.stringify(await res.json(), null, 2);
+}
+async function moveXYZ() {
+  const x = document.getElementById('x').value;
+  const y = document.getElementById('y').value;
+  const z = document.getElementById('z').value;
+  await post(`/api/move_xyz?x=${x}&y=${y}&z=${z}`);
+}
+async function scenarioCollect() {
+  const url = `/api/scenario_collect?sample_x=250&sample_y=0&sample_z=80&analyzer_x=150&analyzer_y=120&analyzer_z=100`;
+  await post(url);
+}
+async function refreshStatus() {
+  const res = await fetch('/api/status');
+  document.getElementById('telemetry').textContent = JSON.stringify(await res.json(), null, 2);
+}
+setInterval(refreshStatus, 2000);
+refreshStatus();
+</script>
+</body>
+</html>
